@@ -22,6 +22,7 @@ for (i in 1:52){
   training.small[,i] <- as.numeric(training.small[,i])
   }
 #Create Model with preprocessing and evaluate on remainder of training set.
+library(randomForest)
 ModelFit <- train(training.small$classe~.,
                   method="rf",
                   preProcess=c("center","scale"),
