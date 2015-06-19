@@ -1,0 +1,37 @@
+---
+title: "Course Project: Write Up"
+output: html_document
+---
+To begin I imported the training and test data sets.  I then split the training set into a set with which I would train my model and one I would use for cross validation.  Because the training set had so many data points, nearly 20,000, I portioned only 20% into the training subset and left 80% for validation.  After some preliminary analysis I saw most of the variables were incomplete so I only included variables which were complete.  This still left me with over 50 variables which I considered more than enough to create a sufficient model.
+```{r}
+library(caret)
+#import training and test data sets
+
+testing <- read.csv("pml-testing.csv")
+training <- read.csv("pml-training.csv")
+
+#create a smaller more managable training set with 20% of training data.  The rest will be used to cross validate.
+part <- createDataPartition(training$classe,p=.2,list=F)
+training.small <- training[part,-c(1:7,12:36,50:59,69:83,87:101,103:112,125:139,141:150),]
+testing.small <- training[-part,-c(1:7,12:36,50:59,69:83,87:101,103:112,125:139,141:150),]
+```
+In order to preprocess and train the data I converted all but the classe variable into numeric classes.  I then centered and scaled my variables and used a random forest method to create a model.  I then validated the model with the remaining portion of the training set.
+```{r}
+#Convert all but classe column to numeric data type
+for (i in 1:52){
+  training.small[,i] <- as.numeric(training.small[,i])
+  }
+#Create Model with preprocessing and evaluate on remainder of training set.
+ModelFit <- train(training.small$classe~.,
+                  method="rf",
+                  preProcess=c("center","scale"),
+                  data=training.small)
+confusionMatrix(testing.small$classe,
+                predict(ModelFit,testing.small))
+```
+I played with several preprocessing options many of wich made no difference or made prediction slightly worse.  I ended with only centering and scaling the variables.  I chose to use a random forest model because it is a model that produces highly accurate results when it has enough data, which I had, and it is good at classification.  
+The kappa statistic is the realitive accuracy the model adds compared to a random model.  I estimated the out of sample error rate to be 1 minus the kappa statistic, 0.0339.  I knew that the out of sample error rate must be higher than the in sample error rate which was 0.0268.  
+Finally I used my model to make predictions on the test data set.
+```{r}
+test.predictions <- predict(ModelFit,testing)
+```
